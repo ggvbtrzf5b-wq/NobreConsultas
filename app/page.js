@@ -1,18 +1,22 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import {
   Search, LayoutDashboard, Wallet, History, Users, Settings, LogOut,
   Bell, Crown, TrendingUp, TrendingDown, Car, CreditCard, Building2,
-  FileText, ChevronRight, Sparkles, Menu, X, Plus, ArrowUpRight
+  FileText, ChevronRight, Sparkles, Menu, X, Plus, ArrowUpRight, Loader2
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Separator } from '@/components/ui/separator'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter
 } from '@/components/ui/dialog'
@@ -26,8 +30,7 @@ const greet = () => {
   if (h < 18) return 'Boa tarde'
   return 'Boa noite'
 }
-
-const BRL = (n) => n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+const BRL = (n) => Number(n || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
 const detectQueryType = (raw) => {
   const s = (raw || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase()
@@ -43,7 +46,6 @@ const iconForType = (t) => ({
   PLACA: Car, CPF: CreditCard, CNPJ: Building2, RENAVAM: FileText
 }[t] || Search)
 
-/* ---------- sidebar ---------- */
 const NAV = [
   { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, active: true },
   { key: 'consultas', label: 'Consultas', icon: Search },
@@ -53,12 +55,10 @@ const NAV = [
   { key: 'configuracoes', label: 'Configurações', icon: Settings },
 ]
 
-function Sidebar({ open, onClose }) {
+function Sidebar({ open, onClose, user, onLogout }) {
   return (
     <>
-      {open && (
-        <div className="fixed inset-0 bg-black/60 z-30 lg:hidden" onClick={onClose} />
-      )}
+      {open && <div className="fixed inset-0 bg-black/60 z-30 lg:hidden" onClick={onClose} />}
       <aside className={cn(
         'fixed lg:sticky top-0 left-0 z-40 h-screen w-64 bg-sidebar border-r border-sidebar-border',
         'transition-transform duration-300 ease-out',
@@ -112,7 +112,8 @@ function Sidebar({ open, onClose }) {
               Fazer Upgrade <ArrowUpRight className="w-3 h-3 ml-1" />
             </Button>
           </div>
-          <button className="mt-3 w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs text-muted-foreground hover:text-foreground hover:bg-sidebar-accent/50 transition-colors">
+          <button onClick={onLogout}
+            className="mt-3 w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs text-muted-foreground hover:text-foreground hover:bg-sidebar-accent/50 transition-colors">
             <LogOut className="w-4 h-4" /> Sair da conta
           </button>
         </div>
@@ -121,13 +122,10 @@ function Sidebar({ open, onClose }) {
   )
 }
 
-/* ---------- navbar ---------- */
-function Navbar({ onMenu }) {
+function Navbar({ onMenu, user, onLogout }) {
   return (
     <header className="sticky top-0 z-20 h-16 bg-background/70 backdrop-blur-xl border-b border-border flex items-center px-4 lg:px-8 gap-4">
-      <button className="lg:hidden" onClick={onMenu}>
-        <Menu className="w-5 h-5" />
-      </button>
+      <button className="lg:hidden" onClick={onMenu}><Menu className="w-5 h-5" /></button>
       <div className="hidden md:flex items-center gap-2 text-xs text-muted-foreground">
         <span>Painel</span>
         <ChevronRight className="w-3 h-3" />
@@ -135,27 +133,43 @@ function Navbar({ onMenu }) {
       </div>
       <div className="flex-1" />
       <Badge variant="outline" className="hidden sm:flex gap-1.5 border-primary/30 text-primary bg-primary/5">
-        <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-        Sistemas online
+        <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" /> Sistemas online
       </Badge>
       <button className="relative w-9 h-9 rounded-lg border border-border hover:border-primary/40 flex items-center justify-center transition-colors">
         <Bell className="w-4 h-4" />
         <span className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-primary" />
       </button>
-      <div className="flex items-center gap-3 pl-3 border-l border-border">
-        <div className="hidden md:block text-right">
-          <div className="text-xs font-semibold leading-none">Francisco Nobre</div>
-          <div className="text-[10px] text-muted-foreground mt-1">Administrador</div>
-        </div>
-        <Avatar className="w-9 h-9 border border-primary/30">
-          <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">FN</AvatarFallback>
-        </Avatar>
-      </div>
+
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button className="flex items-center gap-3 pl-3 border-l border-border hover:opacity-90">
+            <div className="hidden md:block text-right">
+              <div className="text-xs font-semibold leading-none">{user?.name || '—'}</div>
+              <div className="text-[10px] text-muted-foreground mt-1 capitalize">{user?.role || 'usuário'}</div>
+            </div>
+            <Avatar className="w-9 h-9 border border-primary/30">
+              <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">{user?.avatarInitials || 'NC'}</AvatarFallback>
+            </Avatar>
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-56 bg-card border-border">
+          <DropdownMenuLabel className="font-normal">
+            <div className="text-sm font-semibold">{user?.name}</div>
+            <div className="text-xs text-muted-foreground">{user?.email}</div>
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem><Settings className="w-4 h-4 mr-2" /> Configurações</DropdownMenuItem>
+          <DropdownMenuItem><Wallet className="w-4 h-4 mr-2" /> Minha carteira</DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={onLogout} className="text-red-400 focus:text-red-400">
+            <LogOut className="w-4 h-4 mr-2" /> Sair da conta
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </header>
   )
 }
 
-/* ---------- stat card ---------- */
 function StatCard({ label, value, delta, deltaDir = 'up', accent = 'gold', icon: Icon }) {
   const positive = deltaDir === 'up'
   return (
@@ -194,9 +208,11 @@ function StatCard({ label, value, delta, deltaDir = 'up', accent = 'gold', icon:
   )
 }
 
-/* ---------- main page ---------- */
 export default function App() {
+  const router = useRouter()
   const { toast } = useToast()
+  const [user, setUser] = useState(null)
+  const [authLoading, setAuthLoading] = useState(true)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [loading, setLoading] = useState(false)
@@ -205,6 +221,19 @@ export default function App() {
   const [detail, setDetail] = useState(null)
 
   const detect = useMemo(() => detectQueryType(query), [query])
+
+  // Auth check
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch('/api/auth/me')
+        const data = await res.json()
+        if (!data.user) { router.replace('/login'); return }
+        setUser(data.user)
+      } catch { router.replace('/login') }
+      finally { setAuthLoading(false) }
+    })()
+  }, [router])
 
   const loadData = async () => {
     try {
@@ -217,7 +246,7 @@ export default function App() {
     } catch (e) { console.error(e) }
   }
 
-  useEffect(() => { loadData() }, [])
+  useEffect(() => { if (user) loadData() }, [user])
 
   const submit = async (e) => {
     e?.preventDefault?.()
@@ -234,35 +263,58 @@ export default function App() {
         body: JSON.stringify({ query, type: detect.type })
       })
       const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Erro na consulta')
       setDetail(data.item)
       setQuery('')
       toast({ title: 'Consulta realizada', description: `${detect.label} processada com sucesso.` })
       loadData()
     } catch (e) {
-      toast({ title: 'Erro na consulta', description: 'Tente novamente em instantes.', variant: 'destructive' })
+      toast({ title: 'Erro na consulta', description: e.message, variant: 'destructive' })
     } finally {
       setLoading(false)
     }
   }
 
+  const logout = async () => {
+    await fetch('/api/auth/logout', { method: 'POST' })
+    router.replace('/login')
+  }
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="w-8 h-8 text-primary animate-spin" />
+          <div className="text-sm text-muted-foreground">Carregando painel...</div>
+        </div>
+      </div>
+    )
+  }
+
+  if (!user) return null
+
   return (
     <div className="min-h-screen bg-background flex">
-      <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} user={user} onLogout={logout} />
 
       <div className="flex-1 flex flex-col min-w-0">
-        <Navbar onMenu={() => setSidebarOpen(true)} />
+        <Navbar onMenu={() => setSidebarOpen(true)} user={user} onLogout={logout} />
 
-        {/* Hero + Search */}
         <section className="relative border-b border-border">
           <div className="absolute inset-0 grid-bg pointer-events-none" />
           <div className="relative px-4 lg:px-8 py-10 lg:py-14 max-w-6xl">
             <div className="flex items-center gap-2 mb-3">
               <Badge className="bg-primary/10 text-primary border-primary/20 hover:bg-primary/15">
-                <Sparkles className="w-3 h-3 mr-1" /> v0.1.0 — Sprint 1.1
+                <Sparkles className="w-3 h-3 mr-1" /> v0.2.0 — Sprint 2
               </Badge>
+              {user.role === 'admin' && (
+                <Badge variant="outline" className="border-secondary/40 text-secondary">
+                  <Crown className="w-3 h-3 mr-1" /> Admin
+                </Badge>
+              )}
             </div>
             <h1 className="text-2xl lg:text-3xl font-bold tracking-tight">
-              {greet()}, <span className="text-gold-gradient">Francisco</span> 👋
+              {greet()}, <span className="text-gold-gradient">{user.name.split(' ')[0]}</span> 👋
             </h1>
             <p className="text-muted-foreground mt-2 text-sm lg:text-base">O que deseja consultar hoje?</p>
 
@@ -301,7 +353,6 @@ export default function App() {
           </div>
         </section>
 
-        {/* Stats */}
         <section className="px-4 lg:px-8 py-6 lg:py-8">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
             <StatCard label="Saldo" value={BRL(stats.saldo)} delta="+2,4%" deltaDir="up" accent="gold" icon={Wallet} />
@@ -311,7 +362,6 @@ export default function App() {
           </div>
         </section>
 
-        {/* Recent */}
         <section className="px-4 lg:px-8 pb-10">
           <Card className="bg-card border-border/60">
             <CardHeader className="flex flex-row items-center justify-between pb-3">
@@ -370,7 +420,6 @@ export default function App() {
         </section>
       </div>
 
-      {/* Detail dialog */}
       <Dialog open={!!detail} onOpenChange={(o) => !o && setDetail(null)}>
         <DialogContent className="bg-card border-border max-w-lg">
           {detail && (
