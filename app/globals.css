@@ -1,0 +1,117 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Nobre Consultas — Dark Premium (default) */
+    --background: 240 6% 5%;             /* #09090B */
+    --foreground: 40 15% 92%;
+
+    --card: 240 4% 10%;                  /* #18181B */
+    --card-foreground: 40 15% 92%;
+
+    --popover: 240 4% 10%;
+    --popover-foreground: 40 15% 92%;
+
+    --primary: 44 55% 54%;               /* #C9A84C Gold */
+    --primary-foreground: 240 6% 5%;
+
+    --secondary: 211 100% 68%;           /* #5AA9FF Blue */
+    --secondary-foreground: 240 6% 5%;
+
+    --muted: 240 4% 14%;
+    --muted-foreground: 240 5% 65%;
+
+    --accent: 44 55% 54%;
+    --accent-foreground: 240 6% 5%;
+
+    --destructive: 0 72% 55%;
+    --destructive-foreground: 40 15% 96%;
+
+    --border: 240 4% 16%;
+    --input: 240 4% 14%;
+    --ring: 44 55% 54%;
+
+    --radius: 0.75rem;
+
+    --chart-1: 44 55% 54%;
+    --chart-2: 211 100% 68%;
+    --chart-3: 160 60% 50%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 20 90% 60%;
+
+    --sidebar-background: 240 5% 7%;
+    --sidebar-foreground: 40 10% 85%;
+    --sidebar-primary: 44 55% 54%;
+    --sidebar-primary-foreground: 240 6% 5%;
+    --sidebar-accent: 240 4% 12%;
+    --sidebar-accent-foreground: 40 15% 92%;
+    --sidebar-border: 240 4% 14%;
+    --sidebar-ring: 44 55% 54%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html, body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+@layer utilities {
+  .text-gold { color: #C9A84C; }
+  .bg-gold { background-color: #C9A84C; }
+  .text-nobre-blue { color: #5AA9FF; }
+  .bg-nobre-blue { background-color: #5AA9FF; }
+
+  .gold-gradient {
+    background: linear-gradient(135deg, #E7C86A 0%, #C9A84C 50%, #8F7530 100%);
+  }
+  .text-gold-gradient {
+    background: linear-gradient(135deg, #F4D97A 0%, #C9A84C 60%, #A5852F 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .gold-glow {
+    box-shadow: 0 0 0 1px rgba(201, 168, 76, 0.25), 0 8px 30px -8px rgba(201, 168, 76, 0.35);
+  }
+
+  .card-hover {
+    transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+  }
+  .card-hover:hover {
+    transform: translateY(-2px);
+    border-color: rgba(201, 168, 76, 0.4);
+    box-shadow: 0 10px 40px -10px rgba(201, 168, 76, 0.15);
+  }
+
+  .scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
+  .scrollbar-thin::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
+
+  /* Subtle grid background for hero */
+  .grid-bg {
+    background-image:
+      linear-gradient(rgba(201,168,76,0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(201,168,76,0.06) 1px, transparent 1px);
+    background-size: 44px 44px;
+    mask-image: radial-gradient(ellipse at top, black 40%, transparent 75%);
+  }
+
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+  .shimmer {
+    background: linear-gradient(90deg, transparent, rgba(201,168,76,0.15), transparent);
+    background-size: 200% 100%;
+    animation: shimmer 2.5s linear infinite;
+  }
+}
